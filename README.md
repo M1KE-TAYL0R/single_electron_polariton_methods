@@ -30,4 +30,4 @@ Future plans are comprised of the following:
 
 Authors: Braden M. Weight and Michael AD Taylor
 
-Questions/Bugs: bweight@ur.rochester.edu
+Questions/Bugs: bweight@ur.rochester.edu, mtayl@chem.rochester.edu
