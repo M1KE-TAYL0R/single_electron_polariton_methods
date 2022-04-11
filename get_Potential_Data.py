@@ -1,5 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
+from scipy.special import erf
 import subprocess as sp
 #from numba import jit
 

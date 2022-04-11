@@ -1,10 +1,11 @@
+from operator import ge
 import numpy as np
 import scipy as sc
 from scipy.special import erf
 from sympy.functions.special.gamma_functions import uppergamma
 from matplotlib import pyplot as plt
 from numpy import kron
-from numba import jit
+# from numba import jit
 import subprocess as sp
 import sys
 
@@ -13,12 +14,12 @@ def get_Globals():
 
     A0 = float(sys.argv[1]) #0.0 # Light-Matter Coupling Strength
     #wc_ev = 0.1 # Photon Energy, eV
-    wc = 0.986 # a.u. # Demler Fig 3a E1-E0 matter transition
+    wc = 1.0 #0.986 # a.u. # Demler Fig 3a E1-E0 matter transition
 
     m0 = 1.0
     qe = 1.0
 
-    BASIS = "Pc" # "Pc" or "Fock" -- Defines basis of photonic states.
+    BASIS = "Fock" # "Pc" or "Fock" -- Defines basis of photonic states.
     # Add secondary basis choice for the matter part. Currently, always K-space solver.
     #   Need to be able to solve Pauli-Fierz ("D dot E") as well using dipoles.
     #   Also, we should add the Jaynes-Cummings solution just to satisfy class requirements...
@@ -37,6 +38,12 @@ def get_Globals():
     X_m = np.sqrt( 1 / OMEGA / m0 )
     X_im = g * X_m / OMEGA
 
+    # Defining the conversion parameters between a and b
+    # b  = u a + v a^+
+    # b^+ = v a + u a^+
+    # w_ratio = np.sqrt(OMEGA / wc)
+    # v = 0.5 * (w_ratio - 1.0/w_ratio)
+    # u = 0.5 * (w_ratio + 1.0/w_ratio)
 
     ### BOOK KEEPING ###
     sp.call("mkdir -p data", shell=True)
@@ -46,6 +53,34 @@ def get_b():
     for m in range(1,Nf):
         b[m,m-1] = np.sqrt(m)
     return b.T
+
+'''
+def get_a():
+    a = np.zeros((Nf,Nf))
+    for m in range(1,Nf):
+        a[m,m-1] = np.sqrt(m)
+    return a.T
+
+def get_h_ph_in_a():
+    a = get_a()
+    a_dag = a.T
+    w_ratio = np.sqrt(OMEGA / wc)
+    v = 0.5 * (w_ratio - 1.0/w_ratio)
+    u = 0.5 * (w_ratio + 1.0/w_ratio)
+    b = u * a + v * a_dag
+    b_dag = v * a + u * a_dag
+    # h_ph = OMEGA * b @ b_dag
+    h_ph = wc * a_dag @ a 
+    # h_ph += 2* OMEGA * u * v * ((a + a_dag) @ (a + a_dag))
+    h_ph += 0.5 * (OMEGA**2 - wc**2) / wc * ((a + a_dag) @ (a + a_dag))
+    print(f"Omega = {OMEGA}")
+    return h_ph
+
+def b_test():
+    h_ph = get_h_ph_in_a()
+    E, U = np.linalg.eigh( h_ph )
+    np.savetxt( f"./b_test.dat",(E -E[0]) )
+'''
 
 def qc2_nm( n, m, pc_Grid ): # DVR Basis for photon position squared
     dpc = pc_Grid[1] - pc_Grid[0]
@@ -161,6 +196,8 @@ def main():
 
     get_Globals()
 
+    # b_test()
+    
     # Get matter grid (K) and potential (Vk)
     KGrid, VMat_k = get_Reciprocal_space_data() # Returns basis for momentum space as well as potential in complex momentum space V(k)
 
@@ -189,8 +226,7 @@ def main():
         np.savetxt( f"data/E_{BASIS}_A0{A0}_wc{wc}_Transition.dat", E - E[0] )
         np.savetxt( f"data/E_{BASIS}_A0{A0}_wc{wc}_Transition_NORM.dat", (E-E[0])/(E[1]-E[0]) )
         #np.savetxt( f"U_{BASIS}.dat", U )
-
-
+    
 
 
 if ( __name__ == '__main__' ):
